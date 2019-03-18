@@ -59,7 +59,59 @@ class RuneListTest extends TestCase
         $this->assertEquals("s", $subject->rewind());
         $this->assertFalse($subject->prev());
         $this->assertFalse($subject->valid());
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage only runes of length 1 are allowed
+     */
+    public function testArrayAccessException()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $subject->offsetSet(6, "abcd");
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testSeekKeyCurrent()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $subject->prev();
+        $subject->seek(1);
+        $this->assertEquals(1, $subject->key());
+        $subject->seek(1);
+        $this->assertEquals(1, $subject->key());
+        $subject->seek(3);
+        $this->assertEquals(3, $subject->key());
+        $subject->seek(0);
+        $this->assertEquals(0, $subject->key());
+
+        $subject->seek(0);
+        $this->assertEquals(mb_substr(static::UNICODE_STRING, 0, 1), $subject->current());
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testCount()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $this->assertEquals(mb_strlen(static::UNICODE_STRING), $subject->count());
+    }
 
 
+    /**
+     * @throws \Exception
+     */
+    public function testOffset()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $this->assertEquals(0, $subject->key());
+        $this->assertEquals("f", $subject->offset(3));
+        $this->assertEquals(0, $subject->key());
+        $subject->seek(4);
+        $this->assertEquals("f", $subject->offset(-1));
     }
 }
+

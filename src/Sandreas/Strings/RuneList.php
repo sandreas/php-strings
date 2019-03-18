@@ -26,7 +26,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         }
 
         if (!static::isUtf8($string)) {
-            throw new InvalidArgumentException("Provided string is not encoded in specified charset " . $charset);
+            throw new InvalidArgumentException(sprintf("Provided string is not encoded in specified charset %s", $charset));
         }
 
         $this->runes = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
@@ -40,7 +40,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function __toString()
     {
-        return implode("", $this->runes);
+        return implode($this->runes);
     }
 
 
@@ -63,7 +63,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     public function offsetSet($offset, $value)
     {
         if (mb_strlen($value) !== 1) {
-            throw new Exception("rune list can only store runes of length 1");
+            throw new Exception("only runes of length 1 are allowed");
         }
         $this->runes[$offset] = $value;
     }
@@ -72,16 +72,6 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     public function offsetUnset($offset)
     {
         array_splice($this->runes, $offset, 1);
-    }
-
-    public function valid()
-    {
-        return current($this->runes) !== false;
-    }
-
-    public function rewind()
-    {
-        return reset($this->runes);
     }
 
     /**
@@ -95,7 +85,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         }
         $offset = $this->key();
         if ($position === $offset) {
-            $this->current();
+            return;
         }
 
 
@@ -110,17 +100,19 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         }
     }
 
+    public function valid()
+    {
+        return current($this->runes) !== false;
+    }
+
+    public function rewind()
+    {
+        return reset($this->runes);
+    }
+
     public function key()
     {
         return key($this->runes);
-    }
-
-    /**
-     * @return mixed
-     */
-    public function current()
-    {
-        return current($this->runes);
     }
 
     public function prev()
@@ -133,12 +125,20 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         return next($this->runes);
     }
 
+    /**
+     * @return mixed
+     */
+    public function current()
+    {
+        return current($this->runes);
+    }
+
     public function count()
     {
         return count($this->runes);
     }
 
-    public function relative($offset)
+    public function offset($offset)
     {
         return $this->runes[$this->key() + $offset] ?? null;
     }
