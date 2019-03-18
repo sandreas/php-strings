@@ -74,7 +74,7 @@ class RuneListTest extends TestCase
     /**
      * @throws \Exception
      */
-    public function testSeekKeyCurrent()
+    public function testSeekKeyCurrentEnd()
     {
         $subject = new RuneList(static::UNICODE_STRING);
         $subject->prev();
@@ -89,6 +89,8 @@ class RuneListTest extends TestCase
 
         $subject->seek(0);
         $this->assertEquals(mb_substr(static::UNICODE_STRING, 0, 1), $subject->current());
+        $subject->end();
+        $this->assertEquals(mb_strlen($subject) - 1, $subject->key());
     }
 
     /**
@@ -112,6 +114,31 @@ class RuneListTest extends TestCase
         $this->assertEquals(0, $subject->key());
         $subject->seek(4);
         $this->assertEquals("f", $subject->offset(-1));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testPosition()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $this->assertEquals(0, $subject->key());
+        $this->assertEquals("f", $subject->position(3));
+        $this->assertEquals(0, $subject->key());
+        $this->assertNull($subject->position(-1));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testSlice()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $slice = $subject->slice(3, 5);
+
+        $this->assertEquals(0, $slice->key());
+        $this->assertEquals(5, $slice->count());
+        $this->assertEquals(mb_substr(static::UNICODE_STRING, 3, 5), (string)$slice);
     }
 }
 

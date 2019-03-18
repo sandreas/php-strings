@@ -19,7 +19,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     /** @var string[] */
     protected $runes = [];
 
-    public function __construct($string, $charset = self::CHARSET_UTF_8)
+    public function __construct($string = "", $charset = self::CHARSET_UTF_8)
     {
         if ($charset !== static::CHARSET_UTF_8) {
             $string = mb_convert_encoding($string, static::CHARSET_UTF_8, $charset);
@@ -125,12 +125,14 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         return next($this->runes);
     }
 
-    /**
-     * @return mixed
-     */
     public function current()
     {
         return current($this->runes);
+    }
+
+    public function end()
+    {
+        return end($this->runes);
     }
 
     public function count()
@@ -143,4 +145,27 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         return $this->runes[$this->key() + $offset] ?? null;
     }
 
+    public function position($position)
+    {
+        return $this->runes[$position] ?? null;
+    }
+
+
+    /**
+     * @param $offset
+     * @param null $length
+     * @return RuneList
+     */
+    public function slice($offset, $length = null)
+    {
+        return static::fromRunes(array_slice($this->runes, $offset, $length));
+    }
+
+    private static function fromRunes(array $runes)
+    {
+        $instance = new static;
+        $instance->runes = $runes;
+        $instance->rewind();
+        return $instance;
+    }
 }
