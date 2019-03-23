@@ -21,6 +21,14 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function __construct($string = "", $charset = self::CHARSET_UTF_8)
     {
+        $this->append($string, $charset);
+    }
+
+    public function append($string, $charset = self::CHARSET_UTF_8)
+    {
+        if ($string === "") {
+            return;
+        }
         if ($charset !== static::CHARSET_UTF_8) {
             $string = mb_convert_encoding($string, static::CHARSET_UTF_8, $charset);
         }
@@ -29,7 +37,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
             throw new InvalidArgumentException(sprintf("Provided string is not encoded in specified charset %s", $charset));
         }
 
-        $this->runes = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
+        $this->runes = array_merge($this->runes, preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY));
     }
 
     private static function isUtf8($string)
@@ -37,12 +45,10 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         return preg_match("//u", $string);
     }
 
-
     public function __toString()
     {
         return implode($this->runes);
     }
-
 
     public function offsetExists($offset)
     {
@@ -53,7 +59,6 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     {
         return $this->runes[$offset];
     }
-
 
     /**
      * @param mixed $offset
@@ -67,7 +72,6 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         }
         $this->runes[$offset] = $value;
     }
-
 
     public function offsetUnset($offset)
     {
@@ -149,7 +153,6 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     {
         return $this->runes[$position] ?? null;
     }
-
 
     /**
      * @param $offset

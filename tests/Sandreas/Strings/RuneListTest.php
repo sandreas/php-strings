@@ -140,5 +140,14 @@ class RuneListTest extends TestCase
         $this->assertEquals(5, $slice->count());
         $this->assertEquals(mb_substr(static::UNICODE_STRING, 3, 5), (string)$slice);
     }
+
+    public function testAppend()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $subject->append("");
+        $this->assertEquals(static::UNICODE_STRING, (string)$subject);
+        $subject->append("€");
+        $this->assertEquals(static::UNICODE_STRING . "€", (string)$subject);
+    }
 }
 
