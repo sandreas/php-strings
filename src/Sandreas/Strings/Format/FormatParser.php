@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sandreas\Strings\Format;
-
 
 use Exception;
 use Sandreas\Strings\RuneList;
@@ -10,13 +8,21 @@ use Sandreas\Strings\RuneList;
 class FormatParser
 {
     /** @var PlaceHolder[] */
-    protected $placeholderMapping;
+    protected $placeHolderMapping;
     protected $result = [];
 
-    public function __construct(PlaceHolder ...$placeholders)
+    /**
+     * FormatParser constructor.
+     * @param PlaceHolder ...$placeHolders
+     * @throws Exception
+     */
+    public function __construct(PlaceHolder ...$placeHolders)
     {
-        foreach ($placeholders as $placeHolder) {
-            $this->placeholderMapping[$placeHolder->name] = $placeHolder;
+        foreach ($placeHolders as $placeHolder) {
+            if (mb_strlen($placeHolder->name) !== 1) {
+                throw new Exception("Placeholder names must have a length of 1");
+            }
+            $this->placeHolderMapping[$placeHolder->name] = $placeHolder;
         }
     }
 
@@ -24,9 +30,10 @@ class FormatParser
      * @param $formatString
      * @param $string
      *
+     * @return bool
      * @throws Exception
      */
-    public function parseFormat($formatString, $string)
+    public function parseFormat($formatString, $string): bool
     {
         $this->result = [];
         $formatRunes = new RuneList($formatString);
@@ -45,27 +52,10 @@ class FormatParser
             }
 
             if ($formatRunes->next() === false || $formatRune !== $stringRune) {
-                return;
+                return false;
             }
         } while ($stringRunes->next() !== false);
-    }
-
-    /**
-     * @param $placeHolder
-     *
-     * @return array
-     * @throws Exception
-     */
-    protected function ensureValidPlaceHolder($placeHolder)
-    {
-        if ($placeHolder === null) {
-            throw new Exception("Invalid format string (placeholder <%> is not allowed - please use %% for a % sign)");
-        }
-        if (!isset($this->placeholderMapping[$placeHolder])) {
-            throw new Exception("Invalid format string (placeholder <%" . $placeHolder . "> is not allowed)");
-        }
-
-        return $placeHolder;
+        return true;
     }
 
     /**
@@ -73,13 +63,13 @@ class FormatParser
      * @param RuneList $stringRunes
      * @throws Exception
      */
-    private function parsePlaceHolder(RuneList $formatRunes, RuneList $stringRunes)
+    protected function parsePlaceHolder(RuneList $formatRunes, RuneList $stringRunes)
     {
 
         $placeHolder = $formatRunes->next();
         $this->ensureValidPlaceHolder($placeHolder);
 
-        $placeHolderObject = $this->placeholderMapping[$placeHolder];
+        $placeHolderObject = $this->placeHolderMapping[$placeHolder];
         if (!$formatRunes->next()) {
             $placeHolderObject->value = $stringRunes->slice($stringRunes->key())->__toString();
             return;
@@ -106,9 +96,11 @@ class FormatParser
                 break;
             }
 
-            if (!$placeHolderObject->append($stringRunes->current())) {
+            if (!$placeHolderObject->matchesAfterAppend($stringRunes->current())) {
+                $stringRunes->prev();
                 return;
             }
+            $placeHolderObject->append($stringRunes->current());
         } while ($stringRunes->next() !== false);
 
         // handle separator length > 1
@@ -118,12 +110,34 @@ class FormatParser
         }
     }
 
-    public function getPlaceHolderValue($placeHolder)
+    /**
+     * @param $placeHolder
+     *
+     * @return array
+     * @throws Exception
+     */
+    protected function ensureValidPlaceHolder($placeHolder)
     {
-        if (!isset($this->placeholderMapping[$placeHolder])) {
+        if ($placeHolder === null) {
+            throw new Exception("Invalid format string (placeHolder <%> is not allowed - please use %% for a % sign)");
+        }
+        if (!isset($this->placeHolderMapping[$placeHolder])) {
+            throw new Exception("Invalid format string (placeHolder <%" . $placeHolder . "> is not allowed)");
+        }
+
+        return $placeHolder;
+    }
+
+    /**
+     * @param $placeHolder
+     * @return string
+     */
+    public function getPlaceHolderValue($placeHolder): string
+    {
+        if (!isset($this->placeHolderMapping[$placeHolder])) {
             return "";
         }
-        return $this->placeholderMapping[$placeHolder]->value;
+        return $this->placeHolderMapping[$placeHolder]->value;
     }
 
 

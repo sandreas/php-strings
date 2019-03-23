@@ -12,9 +12,16 @@ class FormatParserTest extends TestCase
     const PLACEHOLDER_SERIES_PART = "p";
     const PLACEHOLDER_TITLE = "t";
 
+    const PLACEHOLDER_DAY = "d";
+    const PLACEHOLDER_MONTH = "m";
+    const PLACEHOLDER_YEAR = "y";
+
     /** @var FormatParser */
     protected $subject;
 
+    /**
+     * @throws \Exception
+     */
     public function setUp()
     {
         $this->subject = new FormatParser(
@@ -58,5 +65,22 @@ class FormatParserTest extends TestCase
         $this->assertEquals("Dirt Bike", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES));
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function testParseWithRegex()
+    {
+        $subject = new FormatParser(
+            new PlaceHolder("d", "/^[0-9]{1,2}$/"),
+            new PlaceHolder("m", "/^[0-9]{1,2}$/"),
+            new PlaceHolder("y", "/^[0-9]{1,4}$/")
+        );
+        $subject->parseFormat("%d%m%y", "11122018");
+        $this->assertEquals("11", $subject->getPlaceHolderValue(static::PLACEHOLDER_DAY));
+        $this->assertEquals("12", $subject->getPlaceHolderValue(static::PLACEHOLDER_MONTH));
+        $this->assertEquals("2018", $subject->getPlaceHolderValue(static::PLACEHOLDER_YEAR));
+    }
+
 }
+
 
