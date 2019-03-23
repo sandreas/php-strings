@@ -97,17 +97,14 @@ class FormatParser
             }
 
             if (!$placeHolderObject->matchesAfterAppend($stringRunes->current())) {
-                $stringRunes->prev();
-                return;
+                break;
             }
             $placeHolderObject->append($stringRunes->current());
         } while ($stringRunes->next() !== false);
 
         // handle separator length > 1
         $separatorLength--;
-        if ($separatorLength > 0) {
-            $stringRunes->seek($stringRunes->key() + $separatorLength);
-        }
+        $stringRunes->seek($stringRunes->key() + $separatorLength);
     }
 
     /**
