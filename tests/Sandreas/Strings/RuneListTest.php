@@ -149,5 +149,13 @@ class RuneListTest extends TestCase
         $subject->append("€");
         $this->assertEquals(static::UNICODE_STRING . "€", (string)$subject);
     }
+
+    public function testEof()
+    {
+        $subject = new RuneList(static::UNICODE_STRING);
+        $this->assertFalse($subject->eof());
+        $subject->end();
+        $this->assertTrue($subject->eof());
+    }
 }
 

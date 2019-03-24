@@ -154,6 +154,11 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         return $this->runes[$position] ?? null;
     }
 
+    public function eof()
+    {
+        return $this->key() === $this->count() - 1;
+    }
+
     /**
      * @param $offset
      * @param null $length

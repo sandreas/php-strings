@@ -37,7 +37,7 @@ class FormatParserTest extends TestCase
      */
     public function testParseFormatSimple()
     {
-        $this->subject->parseFormat("--- %a/%s/%p - %t/", "--- Patrick Rothfuss/The Kingkiller Chronicles/1 - The name of the wind/");
+        $this->assertTrue($this->subject->parseFormat("--- %a/%s/%p - %t/", "--- Patrick Rothfuss/The Kingkiller Chronicles/1 - The name of the wind/"));
         $this->assertEquals("Patrick Rothfuss", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_AUTHOR));
         $this->assertEquals("The Kingkiller Chronicles", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES));
         $this->assertEquals("1", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES_PART));
@@ -49,7 +49,7 @@ class FormatParserTest extends TestCase
      */
     public function testParseFormatWithStringPercentSign()
     {
-        $this->subject->parseFormat("%a/%t", "John Doe/100% Dirt Bike");
+        $this->assertTrue($this->subject->parseFormat("%a/%t", "John Doe/100% Dirt Bike"));
         $this->assertEquals("John Doe", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_AUTHOR));
         $this->assertEquals("100% Dirt Bike", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_TITLE));
     }
@@ -59,7 +59,7 @@ class FormatParserTest extends TestCase
      */
     public function testParseFormatWithFormatPercentSign()
     {
-        $this->subject->parseFormat("%a/%p%% %s", "John Doe/100% Dirt Bike");
+        $this->assertTrue($this->subject->parseFormat("%a/%p%% %s", "John Doe/100% Dirt Bike"));
         $this->assertEquals("John Doe", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_AUTHOR));
         $this->assertEquals("100", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES_PART));
         $this->assertEquals("Dirt Bike", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES));
@@ -75,12 +75,11 @@ class FormatParserTest extends TestCase
             new PlaceHolder("m", "/^[0-9]{1,2}$/"),
             new PlaceHolder("y", "/^[0-9]{1,4}$/")
         );
-        $subject->parseFormat("%d%m%y", "11122018");
+        $this->assertTrue($subject->parseFormat("%d%m%y", "11122018"));
         $this->assertEquals("11", $subject->getPlaceHolderValue(static::PLACEHOLDER_DAY));
         $this->assertEquals("12", $subject->getPlaceHolderValue(static::PLACEHOLDER_MONTH));
         $this->assertEquals("2018", $subject->getPlaceHolderValue(static::PLACEHOLDER_YEAR));
     }
-
 }
 
 

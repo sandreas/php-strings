@@ -52,7 +52,7 @@ class FormatParser
             }
 
             if ($formatRunes->next() === false || $formatRune !== $stringRune) {
-                return false;
+                return $stringRunes->eof() && $formatRune === $stringRune;
             }
         } while ($stringRunes->next() !== false);
         return true;
@@ -72,6 +72,7 @@ class FormatParser
         $placeHolderObject = $this->placeHolderMapping[$placeHolder];
         if (!$formatRunes->next()) {
             $placeHolderObject->value = $stringRunes->slice($stringRunes->key())->__toString();
+            $stringRunes->end();
             return;
         };
 
