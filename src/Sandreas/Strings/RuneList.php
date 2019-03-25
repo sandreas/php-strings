@@ -84,7 +84,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
      */
     public function seek($position)
     {
-        if (!$this->valid()) {
+        if (!$this->valid() || $position <= 0) {
             $this->rewind();
         }
         $offset = $this->key();
@@ -92,6 +92,11 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
             return;
         }
 
+        $count = $this->count();
+        if ($position > $count) {
+            $this->end();
+            return;
+        }
 
         while ($position < $offset) {
             $this->prev();
@@ -121,11 +126,17 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function prev()
     {
+        if ($this->key() === 0) {
+            return false;
+        }
         return prev($this->runes);
     }
 
     public function next()
     {
+        if ($this->key() === $this->count() - 1) {
+            return false;
+        }
         return next($this->runes);
     }
 

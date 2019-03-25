@@ -78,7 +78,7 @@ class FormatParser
             return false;
 
         }
-        return true;
+        return $formatRunes->eof() && $stringRunes->eof();
         /*
         do {
             $formatRune = $formatRunes->current();

@@ -68,9 +68,9 @@ class FormatParserTest extends TestCase
     /**
      * @throws \Exception
      */
-    public function testSomething()
+    public function testImproperFormatString()
     {
-        $this->assertFalse($this->subject->parseFormat("../data/batch/%a/%s/%p - %t", "../data/batch/Hanni Münzer, John Beckmann, Anja Herrenbrück/Honigtot"));
+        $this->assertFalse($this->subject->parseFormat("../data/batch/%a/%s/%p - %t", "../data/batch/An author/a book"));
     }
 
     /**
