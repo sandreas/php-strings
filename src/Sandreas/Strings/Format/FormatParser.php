@@ -39,6 +39,47 @@ class FormatParser
         $formatRunes = new RuneList($formatString);
         $stringRunes = new RuneList($string);
 
+
+        while (!$formatRunes->eof() && !$stringRunes->eof()) {
+            $formatRune = $formatRunes->poke();
+            $stringRune = $stringRunes->poke();
+
+            // escaped char
+            if ($formatRune === "%" && $formatRunes->current() === "%") {
+                continue;
+            }
+
+            // non placeholder chars
+            if ($formatRune === $stringRune) {
+                continue;
+            }
+
+            $placeHolderKey = $this->ensureValidPlaceHolder($formatRunes->current());
+            $placeHolder = $this->placeHolderMapping[$placeHolderKey];
+            $separator = $this->extractNextFormatSeparator($formatRunes);
+
+            $start = $stringRunes->key() - 1;
+            $stringSeparatorPosition = $this->seekSeparatorPosition($stringRunes, $separator);
+
+
+            $placeHolderValue = $stringRunes->slice($start, $stringSeparatorPosition - $start);
+
+
+            while ($placeHolderValue->count() > 0) {
+                $placeHolderValueAsString = $placeHolderValue->__toString();
+                if ($placeHolder->matches($placeHolderValueAsString)) {
+                    $placeHolder->setValue($placeHolderValueAsString);
+                    $stringRunes->seek($stringRunes->key() + $placeHolderValue->count());
+                    continue 2;
+                }
+                $placeHolderValue->pop();
+            }
+
+            return false;
+
+        }
+        return true;
+        /*
         do {
             $formatRune = $formatRunes->current();
             $stringRune = $stringRunes->current();
@@ -55,63 +96,14 @@ class FormatParser
                 return $stringRunes->eof() && $formatRune === $stringRune;
             }
         } while ($stringRunes->next() !== false);
-        return true;
-    }
-
-    /**
-     * @param RuneList $formatRunes
-     * @param RuneList $stringRunes
-     * @throws Exception
-     */
-    protected function parsePlaceHolder(RuneList $formatRunes, RuneList $stringRunes)
-    {
-
-        $placeHolder = $formatRunes->next();
-        $this->ensureValidPlaceHolder($placeHolder);
-
-        $placeHolderObject = $this->placeHolderMapping[$placeHolder];
-        if (!$formatRunes->next()) {
-            $placeHolderObject->value = $stringRunes->slice($stringRunes->key())->__toString();
-            $stringRunes->end();
-            return;
-        };
-
-        $separator = "";
-        $separatorLength = 0;
-        do {
-            if ($formatRunes->current() === "%" && $formatRunes->offset(1) !== "%") {
-                break;
-            }
-            $separator .= $formatRunes->current();
-            $separatorLength++;
-
-            if ($formatRunes->current() === "%") {
-                $formatRunes->next();
-            }
-
-        } while ($formatRunes->next() !== false);
-
-
-        do {
-            if ($separatorLength && $separator === $stringRunes->slice($stringRunes->key(), $separatorLength)->__toString()) {
-                break;
-            }
-
-            if (!$placeHolderObject->matchesAfterAppend($stringRunes->current())) {
-                break;
-            }
-            $placeHolderObject->append($stringRunes->current());
-        } while ($stringRunes->next() !== false);
-
-        // handle separator length > 1
-        $separatorLength--;
-        $stringRunes->seek($stringRunes->key() + $separatorLength);
+        return $formatRunes->eof();
+        */
     }
 
     /**
      * @param $placeHolder
      *
-     * @return array
+     * @return string
      * @throws Exception
      */
     protected function ensureValidPlaceHolder($placeHolder)
@@ -127,6 +119,56 @@ class FormatParser
     }
 
     /**
+     * @param RuneList $formatRunes
+     * @return RuneList
+     * @throws Exception
+     */
+    private function extractNextFormatSeparator(RuneList $formatRunes)
+    {
+        $separator = new RuneList();
+        if ($formatRunes->eof()) {
+            return $separator;
+        }
+        $formatRunes->next();
+        $index = $formatRunes->key();
+        for ($i = $index; $i < $formatRunes->count(); $i++) {
+            $current = $formatRunes->position($i);
+            if ($current === "%") {
+                if ($formatRunes->eof()) {
+                    throw new Exception('Invalid format string, empty placeholder');
+                }
+                $formatRunes->next();
+                if ($formatRunes->position($i + 1) !== "%") {
+                    break;
+                }
+                $i++;
+            }
+            $separator->append($current);
+
+        }
+
+        return $separator;
+
+    }
+
+    private function seekSeparatorPosition(RuneList $stringRunes, RuneList $separator)
+    {
+        $count = $stringRunes->count();
+        $separatorCount = $separator->count();
+        if ($separatorCount === 0) {
+            return $count;
+        }
+        $pos = $stringRunes->key();
+
+        for ($i = $pos; $i < $count; $i++) {
+            if ($stringRunes->slice($i, $separatorCount)->__toString() === $separator->__toString()) {
+                return $i;
+            }
+        }
+        return $count;
+    }
+
+    /**
      * @param $placeHolder
      * @return string
      */
@@ -137,6 +179,60 @@ class FormatParser
         }
         return $this->placeHolderMapping[$placeHolder]->value;
     }
+
+//    /**
+//     * @param RuneList $formatRunes
+//     * @param RuneList $stringRunes
+//     * @throws Exception
+//     */
+//    protected function parsePlaceHolder(RuneList $formatRunes, RuneList $stringRunes)
+//    {
+//
+//        $placeHolder = $formatRunes->next();
+//        $this->ensureValidPlaceHolder($placeHolder);
+//
+//        $placeHolderObject = $this->placeHolderMapping[$placeHolder];
+//        if (!$formatRunes->next()) {
+//            $placeHolderObject->value = $stringRunes->slice($stringRunes->key())->__toString();
+//            $stringRunes->end();
+//            $formatRunes->end();
+//            return;
+//        };
+//
+//        $separator = "";
+//        $separatorLength = 0;
+//        do {
+//            if ($formatRunes->current() === "%" && $formatRunes->offset(1) !== "%") {
+//                break;
+//            }
+//            $separator .= $formatRunes->current();
+//            $separatorLength++;
+//
+//            if ($formatRunes->current() === "%") {
+//                $formatRunes->next();
+//            }
+//
+//        } while ($formatRunes->next() !== false);
+//
+//        if ($formatRunes->key() === null) {
+//            $formatRunes->end();
+//        }
+//
+//        do {
+//            if ($separatorLength && $separator === $stringRunes->slice($stringRunes->key(), $separatorLength)->__toString()) {
+//                break;
+//            }
+//
+//            if (!$placeHolderObject->matchesAfterAppend($stringRunes->current())) {
+//                break;
+//            }
+//            $placeHolderObject->append($stringRunes->current());
+//        } while ($stringRunes->next() !== false);
+//
+//        // handle separator length > 1
+//        $separatorLength--;
+//        $stringRunes->seek($stringRunes->key() + $separatorLength);
+//    }
 
 
 }

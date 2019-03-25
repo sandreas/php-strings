@@ -17,14 +17,14 @@ class PlaceHolder
         $this->pattern = $pattern;
     }
 
-    public function matchesAfterAppend($toAppend)
+    public function matches($value)
     {
-        return $this->pattern === null || preg_match($this->pattern, $this->value . $toAppend);
+        return $this->pattern === null || preg_match($this->pattern, $value);
     }
 
 
-    public function append($toAppend)
+    public function setValue($value)
     {
-        $this->value .= $toAppend;
+        $this->value = $value;
     }
 }

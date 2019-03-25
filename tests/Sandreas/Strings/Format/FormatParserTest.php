@@ -68,6 +68,14 @@ class FormatParserTest extends TestCase
     /**
      * @throws \Exception
      */
+    public function testSomething()
+    {
+        $this->assertFalse($this->subject->parseFormat("../data/batch/%a/%s/%p - %t", "../data/batch/Hanni Münzer, John Beckmann, Anja Herrenbrück/Honigtot"));
+    }
+
+    /**
+     * @throws \Exception
+     */
     public function testParseWithRegex()
     {
         $subject = new FormatParser(

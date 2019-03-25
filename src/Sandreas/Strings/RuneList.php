@@ -169,6 +169,29 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         return static::fromRunes(array_slice($this->runes, $offset, $length));
     }
 
+    public function shift()
+    {
+        return array_shift($this->runes);
+    }
+
+    public function pop()
+    {
+        return array_pop($this->runes);
+    }
+
+    public function peek()
+    {
+        return $this->offset(1);
+    }
+
+    public function poke()
+    {
+        $returnValue = $this->current();
+        $this->next();
+        return $returnValue;
+    }
+
+
     private static function fromRunes(array $runes)
     {
         $instance = new static;
@@ -176,4 +199,6 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
         $instance->rewind();
         return $instance;
     }
+
+
 }
