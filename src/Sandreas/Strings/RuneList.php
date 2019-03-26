@@ -129,7 +129,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function prev()
     {
-        if ($value = prev($this->runes)) {
+        if ($value = prev($this->runes) !== false) {
             $this->position--;
             return $value;
         }
@@ -138,7 +138,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function next()
     {
-        if ($value = next($this->runes)) {
+        if ($value = next($this->runes) !== false) {
             $this->position++;
             return $value;
         }
