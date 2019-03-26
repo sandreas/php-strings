@@ -99,11 +99,13 @@ class FormatParser
                         $stringRunes->prev();
                         $longestPossibleCandidate->pop();
                     }
+                    $stringRunes->next();
                     if ($longestPossibleCandidate->count() === 0) {
                         return false;
                     }
 
                     $element->value = (string)$longestPossibleCandidate;
+                    continue;
                 }
 
                 // nextElement is a separator  -> try to find it in string

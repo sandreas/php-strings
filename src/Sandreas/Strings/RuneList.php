@@ -188,13 +188,13 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function shift()
     {
-        $this->position--;
+        $this->position = min($this->position, $this->count() - 2);
         return array_shift($this->runes);
     }
 
     public function pop()
     {
-        $this->position--;
+        $this->position = min($this->position, $this->count() - 2);
         return array_pop($this->runes);
     }
 
