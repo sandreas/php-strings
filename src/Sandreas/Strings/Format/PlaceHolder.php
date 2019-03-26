@@ -22,9 +22,4 @@ class PlaceHolder
         return $this->pattern === null || preg_match($this->pattern, $value);
     }
 
-
-    public function setValue($value)
-    {
-        $this->value = $value;
-    }
 }

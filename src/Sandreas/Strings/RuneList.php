@@ -16,6 +16,8 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     const LINE_FEED = "\n";
     const CHARSET_UTF_8 = "utf-8";
     const CHARSET_WIN_1252 = "windows-1252";
+
+    protected $position = 0;
     /** @var string[] */
     protected $runes = [];
 
@@ -116,6 +118,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function rewind()
     {
+        $this->position = 0;
         return reset($this->runes);
     }
 
@@ -126,18 +129,20 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function prev()
     {
-        if ($this->key() === 0) {
-            return false;
+        if ($value = prev($this->runes)) {
+            $this->position--;
+            return $value;
         }
-        return prev($this->runes);
+        return false;
     }
 
     public function next()
     {
-        if ($this->key() === $this->count() - 1) {
-            return false;
+        if ($value = next($this->runes)) {
+            $this->position++;
+            return $value;
         }
-        return next($this->runes);
+        return false;
     }
 
     public function current()
@@ -147,6 +152,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function end()
     {
+        $this->position = $this->count() - 1;
         return end($this->runes);
     }
 
@@ -167,7 +173,7 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function eof()
     {
-        return $this->key() === $this->count() - 1;
+        return $this->position >= $this->count() - 1;
     }
 
     /**
@@ -182,11 +188,13 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function shift()
     {
+        $this->position--;
         return array_shift($this->runes);
     }
 
     public function pop()
     {
+        $this->position--;
         return array_pop($this->runes);
     }
 

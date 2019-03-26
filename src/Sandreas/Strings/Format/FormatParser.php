@@ -28,6 +28,46 @@ class FormatParser
 
     /**
      * @param $formatString
+     * @return array
+     * @throws Exception
+     */
+    private function parseFormatString($formatString)
+    {
+        $formatRunes = new RuneList($formatString);
+        $formatRunesParts = [];
+        $lastPosition = 0;
+        $currentSeparator = new RuneList();
+        while (!$formatRunes->eof()) {
+            $formatRune = $formatRunes->poke();
+            if ($formatRune === "%" && $formatRunes->current() !== "%") {
+                if ($currentSeparator->count() > 0) {
+                    $formatRunesParts[$lastPosition] = $currentSeparator;
+                    $currentSeparator = new RuneList();
+                }
+
+                $placeHolderName = $formatRunes->poke();
+                $this->ensureValidPlaceHolderName($placeHolderName);
+
+                $placeHolder = new PlaceHolder($placeHolderName);
+                $placeHolderPosition = $formatRunes->key() ? $formatRunes->key() - 2 : $formatRunes->count() - 2;
+                $formatRunesParts[$placeHolderPosition] = $placeHolder;
+                $lastPosition = $formatRunes->key();
+                continue;
+            }
+            $currentSeparator->append($formatRune);
+
+            // escaped char, ignore and proceed
+            if ($formatRune === "%" && $formatRunes->current() === "%") {
+                $formatRunes->next();
+                continue;
+            }
+
+        }
+        return $formatRunesParts;
+    }
+
+    /**
+     * @param $formatString
      * @param $string
      *
      * @return bool
@@ -36,10 +76,16 @@ class FormatParser
     public function parseFormat($formatString, $string): bool
     {
         $this->result = [];
-        $formatRunes = new RuneList($formatString);
+
+
         $stringRunes = new RuneList($string);
 
+        $formatStringStructure = $this->parseFormatString($formatString);
 
+        print_r($formatStringStructure);
+        exit;
+
+        /*
         while (!$formatRunes->eof() && !$stringRunes->eof()) {
             $formatRune = $formatRunes->poke();
             $stringRune = $stringRunes->poke();
@@ -54,7 +100,7 @@ class FormatParser
                 continue;
             }
 
-            $placeHolderKey = $this->ensureValidPlaceHolder($formatRunes->current());
+            $placeHolderKey = $this->ensureValidPlaceHolderName($formatRunes->current());
             $placeHolder = $this->placeHolderMapping[$placeHolderKey];
             $separator = $this->extractNextFormatSeparator($formatRunes);
 
@@ -68,7 +114,7 @@ class FormatParser
             while ($placeHolderValue->count() > 0) {
                 $placeHolderValueAsString = $placeHolderValue->__toString();
                 if ($placeHolder->matches($placeHolderValueAsString)) {
-                    $placeHolder->setValue($placeHolderValueAsString);
+                    $placeHolder->value = $placeHolderValueAsString;
                     $stringRunes->seek($stringRunes->key() + $placeHolderValue->count());
                     continue 2;
                 }
@@ -106,7 +152,7 @@ class FormatParser
      * @return string
      * @throws Exception
      */
-    protected function ensureValidPlaceHolder($placeHolder)
+    protected function ensureValidPlaceHolderName($placeHolder)
     {
         if ($placeHolder === null) {
             throw new Exception("Invalid format string (placeHolder <%> is not allowed - please use %% for a % sign)");

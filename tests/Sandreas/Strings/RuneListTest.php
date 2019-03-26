@@ -58,7 +58,7 @@ class RuneListTest extends TestCase
 
         $this->assertEquals("s", $subject->rewind());
         $this->assertFalse($subject->prev());
-        $this->assertTrue($subject->valid());
+        $this->assertFalse($subject->valid());
     }
 
     /**
