@@ -18,20 +18,33 @@ class FormatParser
      */
     public function __construct(PlaceHolder ...$placeHolders)
     {
+        $this->placeHolderMapping = $this->buildPlaceHolderMapping($placeHolders);
+    }
+
+    /**
+     * @param $placeHolders
+     * @return array
+     * @throws Exception
+     */
+    private function buildPlaceHolderMapping($placeHolders)
+    {
+        $mapping = [];
         foreach ($placeHolders as $placeHolder) {
             if (mb_strlen($placeHolder->name) !== 1) {
                 throw new Exception("Placeholder names must have a length of 1");
             }
-            $this->placeHolderMapping[$placeHolder->name] = $placeHolder;
+            $mapping[$placeHolder->name] = $placeHolder;
         }
+        return $mapping;
     }
 
     /**
      * @param $formatString
+     * @param $placeHolderMapping
      * @return array
      * @throws Exception
      */
-    private function parseFormatString($formatString)
+    private function parseFormatString($formatString, $placeHolderMapping)
     {
         $formatRunes = new RuneList($formatString);
         $formatRunesParts = [];
@@ -45,7 +58,7 @@ class FormatParser
                 }
 
                 $placeHolderName = $formatRunes->poke();
-                $placeHolder = $this->ensureValidPlaceHolderName($placeHolderName);
+                $placeHolder = $this->ensureValidPlaceHolderName($placeHolderName, $placeHolderMapping);
                 $placeHolderPosition = $formatRunes->key() ? $formatRunes->key() - 2 : $formatRunes->count() - 2;
                 $formatRunesParts[$placeHolderPosition] = $placeHolder;
                 $lastPosition = $formatRunes->key();
@@ -76,7 +89,7 @@ class FormatParser
     {
         $this->result = [];
 
-        $formatStringStructure = $this->parseFormatString($formatString);
+        $formatStringStructure = $this->parseFormatString($formatString, $this->placeHolderMapping);
         $stringRunes = new RuneList($string);
         while ($element = current($formatStringStructure)) {
             $nextElement = next($formatStringStructure);
@@ -142,19 +155,20 @@ class FormatParser
     /**
      * @param $placeHolder
      *
+     * @param $mapping
      * @return string
      * @throws Exception
      */
-    protected function ensureValidPlaceHolderName($placeHolder)
+    protected function ensureValidPlaceHolderName($placeHolder, $mapping)
     {
         if ($placeHolder === null) {
             throw new Exception("Invalid format string (placeHolder <%> is not allowed - please use %% for a % sign)");
         }
-        if (!isset($this->placeHolderMapping[$placeHolder])) {
+        if (!isset($mapping[$placeHolder])) {
             throw new Exception("Invalid format string (placeHolder <%" . $placeHolder . "> is not allowed)");
         }
 
-        return $this->placeHolderMapping[$placeHolder];
+        return $mapping[$placeHolder];
     }
 
 
@@ -168,5 +182,47 @@ class FormatParser
             return "";
         }
         return $this->placeHolderMapping[$placeHolder]->value;
+    }
+
+    /**
+     * @param $formatString
+     * @return string
+     * @throws Exception
+     */
+    public function trimSeparatorPrefix($formatString)
+    {
+        if ($formatString === "") {
+            return $formatString;
+        }
+
+        $formatStructure = $this->parseFormatString($formatString, $this->placeHolderMapping);
+
+        foreach ($formatStructure as $position => $structure) {
+            if ($structure instanceof PlaceHolder) {
+                return mb_substr($formatString, $position);
+            }
+        }
+        return $formatString;
+    }
+
+    /**
+     * @param $formatString
+     * @param array $placeHolders
+     * @return string
+     * @throws Exception
+     */
+    public function format($formatString, $placeHolders = [])
+    {
+        $placeHolderMapping = count($placeHolders) === 0 ? $this->placeHolderMapping : $this->buildPlaceHolderMapping($placeHolders);
+        $formatStructure = $this->parseFormatString($formatString, $placeHolderMapping);
+        $returnValue = "";
+        foreach ($formatStructure as $element) {
+            if ($element instanceof RuneList) {
+                $returnValue .= (string)$element;
+            } else {
+                $returnValue .= $element->value;
+            }
+        }
+        return $returnValue;
     }
 }

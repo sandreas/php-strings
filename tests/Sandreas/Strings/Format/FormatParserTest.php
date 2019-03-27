@@ -16,6 +16,12 @@ class FormatParserTest extends TestCase
     const PLACEHOLDER_MONTH = "m";
     const PLACEHOLDER_YEAR = "y";
 
+    const FORMAT_SIMPLE = "%a/%t";
+    const FORMAT_WITH_SEPARATOR_PREFIX = "--- %a/%s/%p - %t/";
+    const FORMAT_WITH_ESCAPE = "%%%a/%p%% %s";
+    const FORMAT_WITH_DOTTED_PREFIX = "../data/batch/%a/%s/%p - %t";
+    const FORMAT_WITHOUT_SEPARATORS = "%d%m%y";
+
     /** @var FormatParser */
     protected $subject;
 
@@ -28,7 +34,10 @@ class FormatParserTest extends TestCase
             new PlaceHolder(static::PLACEHOLDER_AUTHOR),
             new PlaceHolder(static::PLACEHOLDER_SERIES),
             new PlaceHolder(static::PLACEHOLDER_SERIES_PART),
-            new PlaceHolder(static::PLACEHOLDER_TITLE)
+            new PlaceHolder(static::PLACEHOLDER_TITLE),
+            new PlaceHolder(static::PLACEHOLDER_DAY),
+            new PlaceHolder(static::PLACEHOLDER_MONTH),
+            new PlaceHolder(static::PLACEHOLDER_YEAR)
         );
     }
 
@@ -37,7 +46,7 @@ class FormatParserTest extends TestCase
      */
     public function testParseFormatSimple()
     {
-        $this->assertTrue($this->subject->parseFormat("--- %a/%s/%p - %t/", "--- Patrick Rothfuss/The Kingkiller Chronicles/1 - The name of the wind/"));
+        $this->assertTrue($this->subject->parseFormat(static::FORMAT_WITH_SEPARATOR_PREFIX, "--- Patrick Rothfuss/The Kingkiller Chronicles/1 - The name of the wind/"));
         $this->assertEquals("Patrick Rothfuss", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_AUTHOR));
         $this->assertEquals("The Kingkiller Chronicles", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES));
         $this->assertEquals("1", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES_PART));
@@ -49,7 +58,7 @@ class FormatParserTest extends TestCase
      */
     public function testParseFormatWithStringPercentSign()
     {
-        $this->assertTrue($this->subject->parseFormat("%a/%t", "John Doe/100% Dirt Bike"));
+        $this->assertTrue($this->subject->parseFormat(static::FORMAT_SIMPLE, "John Doe/100% Dirt Bike"));
         $this->assertEquals("John Doe", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_AUTHOR));
         $this->assertEquals("100% Dirt Bike", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_TITLE));
     }
@@ -59,7 +68,7 @@ class FormatParserTest extends TestCase
      */
     public function testParseFormatWithFormatPercentSign()
     {
-        $this->assertTrue($this->subject->parseFormat("%a/%p%% %s", "John Doe/100% Dirt Bike"));
+        $this->assertTrue($this->subject->parseFormat(static::FORMAT_WITH_ESCAPE, "%John Doe/100% Dirt Bike"));
         $this->assertEquals("John Doe", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_AUTHOR));
         $this->assertEquals("100", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES_PART));
         $this->assertEquals("Dirt Bike", $this->subject->getPlaceHolderValue(static::PLACEHOLDER_SERIES));
@@ -70,7 +79,7 @@ class FormatParserTest extends TestCase
      */
     public function testImproperFormatString()
     {
-        $this->assertFalse($this->subject->parseFormat("../data/batch/%a/%s/%p - %t", "../data/batch/An author/a book"));
+        $this->assertFalse($this->subject->parseFormat(static::FORMAT_WITH_DOTTED_PREFIX, "../data/batch/An author/a book"));
     }
 
     /**
@@ -79,14 +88,37 @@ class FormatParserTest extends TestCase
     public function testParseWithRegex()
     {
         $subject = new FormatParser(
-            new PlaceHolder("d", "/^[0-9]{1,2}$/"),
-            new PlaceHolder("m", "/^[0-9]{1,2}$/"),
-            new PlaceHolder("y", "/^[0-9]{1,4}$/")
+            new PlaceHolder("d", "/^[0-9]{2}$/"),
+            new PlaceHolder("m", "/^[0-9]{2}$/"),
+            new PlaceHolder("y", "/^[0-9]{4}$/")
         );
-        $this->assertTrue($subject->parseFormat("%d%m%y", "11122018"));
+        $this->assertTrue($subject->parseFormat(static::FORMAT_WITHOUT_SEPARATORS, "11122018"));
         $this->assertEquals("11", $subject->getPlaceHolderValue(static::PLACEHOLDER_DAY));
         $this->assertEquals("12", $subject->getPlaceHolderValue(static::PLACEHOLDER_MONTH));
         $this->assertEquals("2018", $subject->getPlaceHolderValue(static::PLACEHOLDER_YEAR));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testTrimSeparatorPrefix()
+    {
+
+        $this->assertEquals(static::FORMAT_SIMPLE, $this->subject->trimSeparatorPrefix(static::FORMAT_SIMPLE));
+        $this->assertEquals("%a/%s/%p - %t/", $this->subject->trimSeparatorPrefix(static::FORMAT_WITH_SEPARATOR_PREFIX));
+        $this->assertEquals("%a/%s/%p - %t", $this->subject->trimSeparatorPrefix(static::FORMAT_WITH_DOTTED_PREFIX));
+        $this->assertEquals("%a/%p%% %s", $this->subject->trimSeparatorPrefix(static::FORMAT_WITH_ESCAPE));
+        $this->assertEquals(static::FORMAT_WITHOUT_SEPARATORS, $this->subject->trimSeparatorPrefix(static::FORMAT_WITHOUT_SEPARATORS));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testFormat()
+    {
+        $stringWithSeparatorPrefix = "--- Patrick Rothfuss/The Kingkiller Chronicles/1 - The name of the wind/";
+        $this->subject->parseFormat(static::FORMAT_WITH_SEPARATOR_PREFIX, $stringWithSeparatorPrefix);
+        $this->assertEquals($stringWithSeparatorPrefix, $this->subject->format(static::FORMAT_WITH_SEPARATOR_PREFIX));
     }
 }
 

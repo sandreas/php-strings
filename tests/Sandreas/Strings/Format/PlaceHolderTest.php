@@ -14,7 +14,7 @@ class PlaceHolderTest extends TestCase
         $this->assertTrue($subject->matches("a"));
         $this->assertTrue($subject->matches("abcd"));
 
-        $subject->setValue("aaa");
+        $subject->value = "aaa";
         $this->assertEquals("aaa", $subject->value);
     }
 
@@ -27,7 +27,7 @@ class PlaceHolderTest extends TestCase
         $this->assertFalse($subject->matches("09"));
         $this->assertFalse($subject->matches("a"));
 
-        $subject->setValue("1");
+        $subject->value = "1";
         $this->assertEquals("1", $subject->value);
 
     }
