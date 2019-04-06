@@ -11,6 +11,15 @@ class RuneListTest extends TestCase
     const UNICODE_STRING = "asdf €€€€ ölkj";
     const EURO_SIGN = "€";
 
+    const QUOTE_MAPPING = [
+        "=" => "\\",
+        ";" => "\\",
+        "#" => "\\",
+        "\n" => "\\",
+    ];
+    const UNQUOTED_STRING = "when a=b; then # with \\\nand a new line";
+    const QUOTED_STRING = "when a\\=b\\; then \\# with \\\\\nand a new line";
+
     protected $WIN_1252_STRING;
 
     public function setUp()
@@ -156,6 +165,18 @@ class RuneListTest extends TestCase
         $this->assertFalse($subject->eof());
         $subject->end();
         $this->assertTrue($subject->eof());
+    }
+
+    public function testQuote()
+    {
+        $subject = new RuneList(static::UNQUOTED_STRING);
+        $this->assertEquals(static::QUOTED_STRING, $subject->quote(static::QUOTE_MAPPING)->__toString());
+    }
+
+    public function testUnquote()
+    {
+        $subject = new RuneList(static::QUOTED_STRING);
+        $this->assertEquals(static::UNQUOTED_STRING, $subject->unquote(static::QUOTE_MAPPING)->__toString());
     }
 }
 

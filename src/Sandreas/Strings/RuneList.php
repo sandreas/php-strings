@@ -220,4 +220,29 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     }
 
 
+    public function quote($quoteCharMapping)
+    {
+        $quotedRunes = [];
+        foreach ($this->runes as $rune) {
+            if (isset($quoteCharMapping[$rune])) {
+                $quotedRunes[] = $quoteCharMapping[$rune];
+            }
+            $quotedRunes[] = $rune;
+        }
+        return static::fromRunes($quotedRunes);
+    }
+
+    public function unquote($quoteCharMapping)
+    {
+        $unquotedRunes = [];
+        foreach ($this->runes as $index => $rune) {
+            if (isset($quoteCharMapping[$rune]) && isset($this->runes[$index - 1]) && $this->runes[$index - 1] == $quoteCharMapping[$rune]) {
+                array_pop($unquotedRunes);
+            }
+            $unquotedRunes[] = $rune;
+        }
+
+        return static::fromRunes($unquotedRunes);
+    }
+
 }
