@@ -188,13 +188,13 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
 
     public function shift()
     {
-        $this->position = min($this->position, $this->count() - 2);
+        $this->position = max(min($this->position, $this->count() - 2), 0);
         return array_shift($this->runes);
     }
 
     public function pop()
     {
-        $this->position = min($this->position, $this->count() - 2);
+        $this->position = max(min($this->position, $this->count() - 2), 0);
         return array_pop($this->runes);
     }
 
@@ -235,9 +235,14 @@ class RuneList implements ArrayAccess, SeekableIterator, Countable
     public function unquote($quoteCharMapping)
     {
         $unquotedRunes = [];
+
+        $skipNext = false;
         foreach ($this->runes as $index => $rune) {
-            if (isset($quoteCharMapping[$rune]) && isset($this->runes[$index - 1]) && $this->runes[$index - 1] == $quoteCharMapping[$rune]) {
+            if (!$skipNext && isset($quoteCharMapping[$rune]) && isset($this->runes[$index - 1]) && $this->runes[$index - 1] == $quoteCharMapping[$rune]) {
                 array_pop($unquotedRunes);
+                $skipNext = true;
+            } else {
+                $skipNext = false;
             }
             $unquotedRunes[] = $rune;
         }

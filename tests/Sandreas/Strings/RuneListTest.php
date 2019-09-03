@@ -17,8 +17,8 @@ class RuneListTest extends TestCase
         "#" => "\\",
         "\n" => "\\",
     ];
-    const UNQUOTED_STRING = "when a=b; then # with \\\nand a new line";
     const QUOTED_STRING = "when a\\=b\\; then \\# with \\\\\nand a new line";
+    const UNQUOTED_STRING = "when a=b; then # with \\\nand a new line";
 
     protected $WIN_1252_STRING;
 
@@ -178,5 +178,61 @@ class RuneListTest extends TestCase
         $subject = new RuneList(static::QUOTED_STRING);
         $this->assertEquals(static::UNQUOTED_STRING, $subject->unquote(static::QUOTE_MAPPING)->__toString());
     }
+
+    public function testUnquoteEdgeCase()
+    {
+        $subject = new RuneList("\\\\\\\\\\\\\;test");
+        $this->assertEquals("\\\\\\;test", $subject->unquote([
+            "\\" => "\\",
+            ";" => "\\"
+        ])->__toString());
+    }
+
+    public function testSeek()
+    {
+        $subject = new RuneList("abc");
+        $subject->seek(5);
+        $this->assertEquals(2, $subject->key());
+        $subject->seek(1);
+        $this->assertEquals(1, $subject->key());
+    }
+
+    public function testShift()
+    {
+        $subject = new RuneList("abc");
+        $this->assertEquals("a", $subject->shift());
+        $this->assertEquals("b", $subject->shift());
+
+    }
+
+    public function testPeek()
+    {
+        $subject = new RuneList("abc");
+        $this->assertEquals("b", $subject->peek());
+    }
+
+    public function testNextEnd()
+    {
+        $subject = new RuneList("abc");
+        $subject->end();
+        $this->assertFalse($subject->next());
+    }
+
+    public function testPop()
+    {
+        $subject = new RuneList("ab");
+        $this->assertEquals("b", $subject->pop());
+        $this->assertEquals("a", $subject->pop());
+        $this->assertNull($subject->pop());
+    }
+
+    public function testPoke()
+    {
+        $subject = new RuneList("ab");
+        $this->assertEquals("a", $subject->poke());
+        $this->assertEquals(1, $subject->key());
+    }
+
+
 }
 
