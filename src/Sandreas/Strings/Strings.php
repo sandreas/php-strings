@@ -8,12 +8,12 @@ class Strings
 {
     public static function hasSuffix($string, $suffix)
     {
-        return mb_substr($string, mb_strlen($suffix) * -1) === $suffix || $suffix === "";
+        return mb_substr($string, mb_strlen($suffix) * -1) === (string)$suffix || (string)$suffix === "";
     }
 
     public static function hasPrefix($string, $prefix)
     {
-        return mb_substr($string, 0, mb_strlen($prefix)) === $prefix || $prefix === "";
+        return mb_substr($string, 0, mb_strlen($prefix)) === (string)$prefix || (string)$prefix === "";
     }
 
     public static function trimSuffix($string, $suffix)
