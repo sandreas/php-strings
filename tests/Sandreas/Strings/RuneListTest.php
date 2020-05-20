@@ -188,6 +188,16 @@ class RuneListTest extends TestCase
         ])->__toString());
     }
 
+    public function testQuoteUnquote() {
+        $baseString = "\\n";
+        $subject = new RuneList($baseString);
+        $this->assertEquals(2, strlen($subject));
+        $quoted = $subject->quote(static::QUOTE_MAPPING);
+        $this->assertEquals("\\n", $quoted);
+
+        $this->assertEquals($baseString, $subject->unquote($quoted));
+    }
+
     public function testSeek()
     {
         $subject = new RuneList("abc");
