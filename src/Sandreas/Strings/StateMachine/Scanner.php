@@ -180,6 +180,6 @@ class Scanner implements Countable, IteratorAggregate, ArrayAccess
     }
 
     public function hasNext() {
-        return $this->offset < $this->count();
+        return $this->offset < $this->count()-1;
     }
 }

@@ -53,24 +53,25 @@ class TokenizerTest extends TestCase
         $template = "a/testing/%a/with/100%%/value%b";
         $grammar = new Grammar([
             function (Scanner $scanner) {
+                if($scanner->peek() === "%" && $scanner->offset(1) !== "%") {
+                    return new Token(static::TOKEN_PLACEHOLDER, $scanner->poke().$scanner->poke());
+                }
+                return null;
+            },
+            function (Scanner $scanner) {
                 $token = new Token(static::TOKEN_NO_PLACEHOLDER);
                 while ($scanner->peek() !== null) {
-                    if ($scanner->peek() === "%") {
-                        if ($scanner->offset(1) === "%") {
-                            $token->append($scanner->poke() . $scanner->poke());
-                        }
+                    if ($scanner->peek() === "%" && $scanner->offset(1) !== "%") {
                         return $token->orNullOnEmptyValue();
+                    }
+                    $char = $scanner->poke();
+                    if ($char === "%" && $scanner->peek() === "%") {
+                        $token->append($char . $scanner->poke());
                     } else {
-                        $token->append($scanner->poke());
+                        $token->append($char);
                     }
                 }
                 return $token->orNullOnEmptyValue();
-            },
-            function (Scanner $scanner) {
-                if ($scanner->peek() === "%" && $scanner->offset(1) !== "%") {
-                    return new Token(static::TOKEN_PLACEHOLDER, $scanner->poke() . $scanner->poke());
-                }
-                return null;
             }
         ]);
         $subject = new Tokenizer($grammar);
