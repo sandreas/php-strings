@@ -162,8 +162,11 @@ class Scanner implements Countable, IteratorAggregate, ArrayAccess
 
     public function next()
     {
-        if ($value = next($this->chars) !== false) {
+        if ($this->offset < count($this->chars)) {
             $this->offset++;
+        }
+
+        if ($value = next($this->chars) !== false) {
             return $value;
         }
         return false;
@@ -175,11 +178,13 @@ class Scanner implements Countable, IteratorAggregate, ArrayAccess
         return $value === false ? null : $value;
     }
 
-    public function key() {
+    public function key()
+    {
         return $this->offset;
     }
 
-    public function hasNext() {
-        return $this->offset < $this->count()-1;
+    public function endReached()
+    {
+        return $this->peek() === null;
     }
 }

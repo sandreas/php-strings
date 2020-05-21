@@ -14,6 +14,7 @@ class TokenizerTest extends TestCase
 {
     const TOKEN_PLACEHOLDER = 0;
     const TOKEN_NO_PLACEHOLDER = 1;
+    const PLACEHOLDER_PREFIX = "%";
     /**
      * @var Tokenizer
      */
@@ -41,43 +42,54 @@ class TokenizerTest extends TestCase
     public function testEmptyScanner()
     {
         $this->mockGrammar->shouldNotReceive("buildNextToken");
-        $this->mockScanner->shouldReceive("hasNext")->andReturnFalse();
+        $this->mockScanner->shouldReceive("endReached")->andReturnTrue();
         $this->assertEquals([], $this->subject->tokenize($this->mockScanner));
     }
 
     /**
      * @throws TokenizeException
      */
-    public function testFullSpec()
+    public function testExtensiveTokenizeWithIntegrationOfGrammarAndScanner()
     {
-        $template = "a/testing/%a/with/100%%/value%b";
+        $formatString = "--- %a/%s/%p - %t/";
+
         $grammar = new Grammar([
             function (Scanner $scanner) {
-                if($scanner->peek() === "%" && $scanner->offset(1) !== "%") {
-                    return new Token(static::TOKEN_PLACEHOLDER, $scanner->poke().$scanner->poke());
-                }
-                return null;
+                return $this->eatPlaceHolder($scanner);
             },
             function (Scanner $scanner) {
-                $token = new Token(static::TOKEN_NO_PLACEHOLDER);
-                while ($scanner->peek() !== null) {
-                    if ($scanner->peek() === "%" && $scanner->offset(1) !== "%") {
-                        return $token->orNullOnEmptyValue();
-                    }
-                    $char = $scanner->poke();
-                    if ($char === "%" && $scanner->peek() === "%") {
-                        $token->append($char . $scanner->poke());
-                    } else {
-                        $token->append($char);
-                    }
-                }
-                return $token->orNullOnEmptyValue();
+                return $this->eatNonPlaceholder($scanner);
             }
         ]);
         $subject = new Tokenizer($grammar);
-        $tokens = $subject->tokenize(new Scanner($template));
+        $tokens = $subject->tokenize(new Scanner($formatString));
 
-        print_r($tokens);
+        $this->assertCount(9, $tokens);
+    }
 
+
+    private function eatPlaceHolder(Scanner $scanner)
+    {
+        if ($scanner->peek() === static::PLACEHOLDER_PREFIX && $scanner->offset(1) !== static::PLACEHOLDER_PREFIX) {
+            return new Token(static::TOKEN_PLACEHOLDER, $scanner->poke() . $scanner->poke());
+        }
+        return null;
+    }
+
+    private function eatNonPlaceholder(Scanner $scanner)
+    {
+        $token = new Token(static::TOKEN_NO_PLACEHOLDER);
+        while (!$scanner->endReached()) {
+            if ($scanner->peek() === static::PLACEHOLDER_PREFIX && $scanner->offset(1) !== static::PLACEHOLDER_PREFIX) {
+                return $token->orNullOnEmptyValue();
+            }
+            $char = $scanner->poke();
+            if ($char === static::PLACEHOLDER_PREFIX && $scanner->peek() === static::PLACEHOLDER_PREFIX) {
+                $token->append($char . $scanner->poke());
+            } else {
+                $token->append($char);
+            }
+        }
+        return $token->orNullOnEmptyValue();
     }
 }
