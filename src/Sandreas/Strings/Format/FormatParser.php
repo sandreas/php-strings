@@ -4,7 +4,6 @@ namespace Sandreas\Strings\Format;
 
 use Exception;
 use Sandreas\Strings\RuneList;
-use Sandreas\Strings\StateMachine\Grammar;
 use Sandreas\Strings\StateMachine\Scanner;
 use Sandreas\Strings\StateMachine\Token;
 use Sandreas\Strings\StateMachine\TokenizeException;
@@ -57,72 +56,25 @@ class FormatParser
      */
     private function parseFormatString($formatString, $placeHolderMapping)
     {
-        /*
-        // very strange: although tokens end up in exactly the same formatRunesParts,
-        // tests do not pass - problem seems to be the RuneLists with % in it
-        // but this is HARD to debug
-
-
-        $arrayKeys = array_keys($formatRunesParts);
-        keys: 0,2,4,5,7,10
-        $keys = array(0,7); // 0 and 7 contain % RuneLists
-
-        // all  runelists with % in it produce some kind of problem
-        // copying from original array works
-        foreach($formatRunesParts as $key => $value) {
-            if(in_array($key, $keys)) {
-                $formatRunesParts2[$key] = $formatRunesParts[$key];
-            }
-        }
-
         $tokens = $this->tokenizeFormatString($formatString);
-        $formatRunesParts2 = [];
+        $formatRunesParts = [];
         $position = 0;
         foreach ($tokens as $token) {
             $runeList = new RuneList($token->value);
             if ($token->type === static::TOKEN_PLACEHOLDER) {
                 $placeHolder = ltrim($token->value, static::PLACEHOLDER_PREFIX);
-                $formatRunesParts2[$position] = $this->ensureValidPlaceHolderName($placeHolder, $placeHolderMapping);
+                $formatRunesParts[$position] = $this->ensureValidPlaceHolderName($placeHolder, $placeHolderMapping);
                 $position += $runeList->count();
                 continue;
+            } else {
+                $runeList = $runeList->unquote([
+                    static::PLACEHOLDER_PREFIX => static::PLACEHOLDER_PREFIX
+                ]);
             }
 
-            $formatRunesParts2[$position] = $runeList;
+            $formatRunesParts[$position] = $runeList;
             $position += $runeList->count();
         }
-        // return $formatRunesParts2;
-*/
-
-        $formatRunes = new RuneList($formatString);
-        $formatRunesParts = [];
-        $lastPosition = 0;
-        $currentSeparator = new RuneList();
-        while ($formatRune = $formatRunes->poke()) {
-            if ($formatRune === "%" && $formatRunes->current() !== "%") {
-                if ($currentSeparator->count() > 0) {
-                    $formatRunesParts[$lastPosition] = $currentSeparator;
-                    $currentSeparator = new RuneList();
-                }
-
-                $placeHolderName = $formatRunes->poke();
-                $placeHolder = $this->ensureValidPlaceHolderName($placeHolderName, $placeHolderMapping);
-                $placeHolderPosition = $formatRunes->key() ? $formatRunes->key() - 2 : $formatRunes->count() - 2;
-                $formatRunesParts[$placeHolderPosition] = $placeHolder;
-                $lastPosition = $formatRunes->key();
-                continue;
-            }
-            $currentSeparator->append($formatRune);
-
-            // escaped char, ignore and proceed
-            if ($formatRune === "%" && $formatRunes->current() === "%") {
-                $formatRunes->next();
-                continue;
-            }
-        }
-        if ($currentSeparator->count() > 0) {
-            $formatRunesParts[$lastPosition] = $currentSeparator;
-        }
-
         return $formatRunesParts;
     }
 
@@ -138,7 +90,6 @@ class FormatParser
         $this->result = [];
 
         $formatStringStructure = $this->parseFormatString($formatString, $this->placeHolderMapping);
-
 
         $stringRunes = new RuneList($string);
         while ($element = current($formatStringStructure)) {
@@ -174,7 +125,7 @@ class FormatParser
                 // nextElement is a separator  -> try to find it in string
                 $nextElementString = (string)$nextElement;
                 $placeHolderValue = "";
-                while (1) {
+                while (true) {
                     $sliced = (string)$stringRunes->slice($stringRunes->key(), $nextElement->count());
                     if ($sliced === $nextElementString) {
                         break;
@@ -260,42 +211,10 @@ class FormatParser
      */
     private function tokenizeFormatString($formatString)
     {
-        $grammar = new Grammar([
-            function (Scanner $scanner) {
-                return $this->eatPlaceHolder($scanner);
-            },
-            function (Scanner $scanner) {
-                return $this->eatNonPlaceholder($scanner);
-            }
-        ]);
-        $subject = new Tokenizer($grammar);
+        $subject = new Tokenizer(new FormatParserFormatStringGrammar());
         return $subject->tokenize(new Scanner($formatString));
     }
 
-    private function eatPlaceHolder(Scanner $scanner)
-    {
-        if ($scanner->peek() === static::PLACEHOLDER_PREFIX && $scanner->offset(1) !== static::PLACEHOLDER_PREFIX) {
-            return new Token(static::TOKEN_PLACEHOLDER, $scanner->poke() . $scanner->poke());
-        }
-        return null;
-    }
-
-    private function eatNonPlaceholder(Scanner $scanner)
-    {
-        $token = new Token(static::TOKEN_NO_PLACEHOLDER);
-        while (!$scanner->endReached()) {
-            if ($scanner->peek() === static::PLACEHOLDER_PREFIX && $scanner->offset(1) !== static::PLACEHOLDER_PREFIX) {
-                return $token->orNullOnEmptyValue();
-            }
-            $char = $scanner->poke();
-            if ($char === static::PLACEHOLDER_PREFIX && $scanner->peek() === static::PLACEHOLDER_PREFIX) {
-                $token->append($char . $scanner->poke());
-            } else {
-                $token->append($char);
-            }
-        }
-        return $token->orNullOnEmptyValue();
-    }
 
     /**
      * @param $formatString
