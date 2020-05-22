@@ -3,6 +3,7 @@
 namespace Sandreas\Strings\Format;
 
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 
 class FormatParserTest extends TestCase
@@ -15,6 +16,7 @@ class FormatParserTest extends TestCase
     const PLACEHOLDER_DAY = "d";
     const PLACEHOLDER_MONTH = "m";
     const PLACEHOLDER_YEAR = "y";
+    const PLACEHOLDER_GENRE = "g";
 
     const FORMAT_SIMPLE = "%a/%t";
     const FORMAT_WITH_SEPARATOR_PREFIX = "--- %a/%s/%p - %t/";
@@ -26,11 +28,12 @@ class FormatParserTest extends TestCase
     protected $subject;
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function setUp()
     {
         $this->subject = new FormatParser(
+            new PlaceHolder(static::PLACEHOLDER_GENRE),
             new PlaceHolder(static::PLACEHOLDER_AUTHOR),
             new PlaceHolder(static::PLACEHOLDER_SERIES),
             new PlaceHolder(static::PLACEHOLDER_SERIES_PART),
@@ -42,7 +45,7 @@ class FormatParserTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testParseFormatSimple()
     {
@@ -54,7 +57,7 @@ class FormatParserTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testParseFormatWithStringPercentSign()
     {
@@ -64,7 +67,7 @@ class FormatParserTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testParseFormatWithFormatPercentSign()
     {
@@ -75,7 +78,7 @@ class FormatParserTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testImproperFormatString()
     {
@@ -83,7 +86,7 @@ class FormatParserTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testParseWithRegex()
     {
@@ -99,7 +102,7 @@ class FormatParserTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testTrimSeparatorPrefix()
     {
@@ -109,16 +112,31 @@ class FormatParserTest extends TestCase
         $this->assertEquals("%a/%s/%p - %t", $this->subject->trimSeparatorPrefix(static::FORMAT_WITH_DOTTED_PREFIX));
         $this->assertEquals("%a/%p%% %s", $this->subject->trimSeparatorPrefix(static::FORMAT_WITH_ESCAPE));
         $this->assertEquals(static::FORMAT_WITHOUT_SEPARATORS, $this->subject->trimSeparatorPrefix(static::FORMAT_WITHOUT_SEPARATORS));
+        $this->assertEquals("%g/%a/%s/%p - %t/", $this->subject->trimSeparatorPrefix("../data/issue_60/%g/%a/%s/%p - %t/"));
+
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testFormat()
     {
         $stringWithSeparatorPrefix = "--- Patrick Rothfuss/The Kingkiller Chronicles/1 - The name of the wind/";
         $this->subject->parseFormat(static::FORMAT_WITH_SEPARATOR_PREFIX, $stringWithSeparatorPrefix);
         $this->assertEquals($stringWithSeparatorPrefix, $this->subject->format(static::FORMAT_WITH_SEPARATOR_PREFIX));
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function testSpecificIssue()
+    {
+        $formatString = "../data/issue_60/%g/%a/%s/%p - %t/";
+        $string = "../data/issue_60/Fantasy/Joanne/Harry Potter/0 - Zero Test/";
+        $this->assertEquals("%g/%a/%s/%p - %t/", $this->subject->trimSeparatorPrefix($formatString));
+        $this->assertTrue($this->subject->parseFormat($formatString, $string));
+
     }
 }
 
