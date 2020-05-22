@@ -1,13 +1,9 @@
 <?php
 
-namespace Strings\StateMachine;
+namespace Sandreas\Strings\StateMachine;
 
 use Mockery as m;
-use Sandreas\Strings\StateMachine\Grammar;
 use PHPUnit\Framework\TestCase;
-use Sandreas\Strings\StateMachine\Scanner;
-use Sandreas\Strings\StateMachine\Token;
-use Sandreas\Strings\StateMachine\TokenizeException;
 
 
 class GrammarTest extends TestCase

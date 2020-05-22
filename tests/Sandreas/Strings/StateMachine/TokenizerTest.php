@@ -1,12 +1,7 @@
 <?php
 
-namespace Strings\StateMachine;
+namespace Sandreas\Strings\StateMachine;
 
-use Sandreas\Strings\StateMachine\Grammar;
-use Sandreas\Strings\StateMachine\Scanner;
-use Sandreas\Strings\StateMachine\Token;
-use Sandreas\Strings\StateMachine\TokenizeException;
-use Sandreas\Strings\StateMachine\Tokenizer;
 use PHPUnit\Framework\TestCase;
 use Mockery as m;
 
@@ -20,11 +15,11 @@ class TokenizerTest extends TestCase
      */
     private $subject;
     /**
-     * @var m\LegacyMockInterface|m\MockInterface|Grammar
+     * @var m\MockInterface|m\LegacyMockInterface|Grammar
      */
     private $mockGrammar;
     /**
-     * @var m\LegacyMockInterface|m\MockInterface|Scanner
+     * @var m\MockInterface|m\LegacyMockInterface|Scanner
      */
     private $mockScanner;
 

@@ -28,7 +28,7 @@ class Scanner implements Countable, IteratorAggregate, ArrayAccess
 
     public function set($string, $charset = self::CHARSET_UTF_8) {
         $this->chars = [];
-        $this->offset = 0;
+        $this->seek(0);
         $this->append($string, $charset);
     }
 
@@ -162,10 +162,7 @@ class Scanner implements Countable, IteratorAggregate, ArrayAccess
 
     public function next()
     {
-        if ($this->offset < count($this->chars)) {
-            $this->offset++;
-        }
-
+        $this->seek($this->offset + 1);
         if ($value = next($this->chars) !== false) {
             return $value;
         }
@@ -187,4 +184,56 @@ class Scanner implements Countable, IteratorAggregate, ArrayAccess
     {
         return $this->peek() === null;
     }
+
+    public function cursorStartsWith(string $needle)
+    {
+        $needleScanner = new self($needle);
+        for ($i = 0; $i < $needleScanner->count(); $i++) {
+            if ($needleScanner->offset($i) !== $this->offset($i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function seek($offset)
+    {
+        $this->offset = min(max($offset, 0), count($this->chars));
+        return $this->offset;
+    }
+
+    public function seekEnd()
+    {
+        return $this->seek($this->count());
+    }
+
+    public function seekString($needle)
+    {
+        while (!$this->endReached() && !$this->cursorStartsWith($needle)) {
+            $this->seek($this->offset + 1);
+        }
+        return $this->key();
+    }
+
+    public function cursorExtractSeekString($string)
+    {
+        $this->cursorExtract($this->key(), $this->seekString($string));
+    }
+
+    public function cursorExtractSeekEnd()
+    {
+        $this->cursorExtract($this->key(), $this->seekEnd());
+    }
+
+    private function cursorExtract($currentKey, $lastKey)
+    {
+        $len = max($lastKey - $currentKey, 0);
+        return implode(array_slice($this->chars, $currentKey, $len));
+    }
+
+    public function __toString()
+    {
+        return implode($this->chars);
+    }
+
 }
