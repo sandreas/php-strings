@@ -6,16 +6,28 @@ namespace Sandreas\Strings\StateMachine;
 
 class Tokenizer
 {
-    const MAX_FAILED_TOKEN_BUILD_COUNT = 3;
     /**
      * @var Grammar
      */
     protected $grammar;
 
+    protected $maxFailedTokenBuildCount = 1;
 
-    public function __construct( Grammar $grammar)
+
+    public function __construct(Grammar $grammar)
     {
         $this->grammar = $grammar;
+    }
+
+    /**
+     * Prevents endless loops, when scanner does not move forward for x iterations
+     * set to 0 do disable this check
+     *
+     * @param $maxFailedTokenBuildCount
+     */
+    public function setMaxFailedTokenBuildCount($maxFailedTokenBuildCount)
+    {
+        $this->maxFailedTokenBuildCount = $maxFailedTokenBuildCount;
     }
 
 
@@ -30,17 +42,13 @@ class Tokenizer
          * @var Token[]
          */
         $tokens = [];
-        $failedTokenBuildCount = 0;
+        $maxFailedCount = $this->maxFailedTokenBuildCount;
         while (!$scanner->endReached()) {
-            $positionBeforeTokenBuild = $scanner->key();
+            $positionBeforeTokenBuild = (int)$scanner->key();
             $tokens[] = $this->grammar->buildNextToken($scanner);
-            $positionAfterTokenBuild = $scanner->key();
 
-            if ($positionAfterTokenBuild <= $positionBeforeTokenBuild) {
-                $failedTokenBuildCount++;
-            }
-            if ($failedTokenBuildCount > static::MAX_FAILED_TOKEN_BUILD_COUNT) {
-                throw new TokenizeException(sprintf("Scanner as not moved forward since %s iterations (%s), so there seems to be something wrong with your grammar - to prevent endless loops, the tokenizer has been stopped", static::MAX_FAILED_TOKEN_BUILD_COUNT, $scanner->peek()));
+            if ($this->maxFailedTokenBuildCount > 0 && (int)$scanner->key() <= $positionBeforeTokenBuild && --$maxFailedCount < 1) {
+                throw new TokenizeException(sprintf("Scanner as not moved forward since %s iterations (at position %s), so there seems to be something wrong with your grammar - to prevent endless loops, the tokenizer has been stopped", $this->maxFailedTokenBuildCount, $scanner->key()));
             }
         }
         return $tokens;
