@@ -7,8 +7,7 @@ use Mockery as m;
 
 class TokenizerTest extends TestCase
 {
-    const TOKEN_PLACEHOLDER = 0;
-    const TOKEN_NO_PLACEHOLDER = 1;
+    const TOKEN_PLACEHOLDER = 1;
     const PLACEHOLDER_PREFIX = "%";
     /**
      * @var Tokenizer
@@ -22,10 +21,16 @@ class TokenizerTest extends TestCase
      * @var m\MockInterface|m\LegacyMockInterface|Scanner
      */
     private $mockScanner;
+    /**
+     * @var m\LegacyMockInterface|m\MockInterface|Token
+     */
+    private $mockToken;
 
 
     public function setUp()
     {
+        $this->mockToken = m::mock(Token::class);
+        $this->mockToken->makePartial();
         $this->mockGrammar = m::mock(Grammar::class);
         $this->mockScanner = m::mock(Scanner::class);
         $this->subject = new Tokenizer($this->mockGrammar);
@@ -51,9 +56,6 @@ class TokenizerTest extends TestCase
         $grammar = new Grammar([
             function (Scanner $scanner) {
                 return $this->eatPlaceHolder($scanner);
-            },
-            function (Scanner $scanner) {
-                return $this->eatNonPlaceholder($scanner);
             }
         ]);
         $subject = new Tokenizer($grammar);
@@ -71,29 +73,13 @@ class TokenizerTest extends TestCase
         return null;
     }
 
-    private function eatNonPlaceholder(Scanner $scanner)
-    {
-        $token = new Token(static::TOKEN_NO_PLACEHOLDER);
-        while (!$scanner->endReached()) {
-            if ($scanner->peek() === static::PLACEHOLDER_PREFIX && $scanner->offset(1) !== static::PLACEHOLDER_PREFIX) {
-                return $token->orNullOnEmptyValue();
-            }
-            $char = $scanner->poke();
-            if ($char === static::PLACEHOLDER_PREFIX && $scanner->peek() === static::PLACEHOLDER_PREFIX) {
-                $token->append($char . $scanner->poke());
-            } else {
-                $token->append($char);
-            }
-        }
-        return $token->orNullOnEmptyValue();
-    }
-
     public function testDefaultMaxFailedTokenBuildCount()
     {
         $this->expectExceptionObject(new TokenizeException("Scanner as not moved forward since 1 iterations (at position 0), so there seems to be something wrong with your grammar - to prevent endless loops, the tokenizer has been stopped"));
+
         $this->mockScanner->shouldReceive("endReached")->andReturn(false);
         $this->mockScanner->shouldReceive("key")->andReturn(0);
-        $this->mockGrammar->shouldReceive("buildNextToken")->andReturn("fake-token");
+        $this->mockGrammar->shouldReceive("buildNextToken")->andReturn($this->mockToken);
         $this->subject->tokenize($this->mockScanner);
     }
 
@@ -102,7 +88,7 @@ class TokenizerTest extends TestCase
         $this->expectExceptionObject(new TokenizeException("Scanner as not moved forward since 3 iterations (at position 0), so there seems to be something wrong with your grammar - to prevent endless loops, the tokenizer has been stopped"));
         $this->mockScanner->shouldReceive("endReached")->andReturn(false);
         $this->mockScanner->shouldReceive("key")->andReturn(0);
-        $this->mockGrammar->shouldReceive("buildNextToken")->andReturn("fake-token");
+        $this->mockGrammar->shouldReceive("buildNextToken")->andReturn($this->mockToken);
 
         $this->subject->setMaxFailedTokenBuildCount(3);
         $this->subject->tokenize($this->mockScanner);

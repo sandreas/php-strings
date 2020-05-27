@@ -8,8 +8,8 @@ use PHPUnit\Framework\TestCase;
 
 class GrammarTest extends TestCase
 {
-    const TOKEN_SPACE = 0;
-    const TOKEN_NONE_SPACE = 1;
+    const TOKEN_SPACE = 1;
+
     /**
      * @var m\LegacyMockInterface|m\MockInterface|Scanner
      */
@@ -20,20 +20,12 @@ class GrammarTest extends TestCase
         $this->mockScanner = m::mock(Scanner::class);
 
     }
-
-    /**
-     * @throws TokenizeException
-     */
     public function testEmptyGrammar()
     {
-        $this->expectExceptionObject(new TokenizeException("Could not build next token - no matching token generator found in grammar or no token returned"));
         $subject = new Grammar();
-        $subject->buildNextToken($this->mockScanner);
+        $this->assertNull($subject->buildNextToken($this->mockScanner));
     }
 
-    /**
-     * @throws TokenizeException
-     */
     public function testSimpleGrammar()
     {
         $subject = new Grammar([
@@ -43,14 +35,7 @@ class GrammarTest extends TestCase
                     $tokenValue .= $scanner->poke();
                 }
                 return new Token(static::TOKEN_SPACE, $tokenValue);
-            },
-            function (Scanner $scanner) {
-                $tokenValue = "";
-                while ($scanner->peek() !== " " && $scanner->peek() !== null) {
-                    $tokenValue .= $scanner->poke();
-                }
-                return new Token(static::TOKEN_NONE_SPACE, $tokenValue);
-            },
+            }
         ]);
 
         $scanner = new Scanner("   x");

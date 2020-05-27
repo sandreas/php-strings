@@ -12,10 +12,8 @@ use Sandreas\Strings\StateMachine\Tokenizer;
 class FormatParser
 {
 
+    const TOKEN_PLACEHOLDER = 1;
     const PLACEHOLDER_PREFIX = "%";
-
-    const TOKEN_PLACEHOLDER = 0;
-    const TOKEN_NO_PLACEHOLDER = 1;
 
     /** @var PlaceHolder[] */
     protected $placeHolderMapping;

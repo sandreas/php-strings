@@ -6,6 +6,8 @@ namespace Sandreas\Strings\StateMachine;
 
 class Grammar
 {
+
+
     /**
      * @var array
      */
@@ -18,7 +20,6 @@ class Grammar
     /**
      * @param Scanner $scanner
      * @return Token
-     * @throws TokenizeException
      */
     public function buildNextToken(Scanner $scanner) {
         foreach ($this->callbacks as $tokenGeneratorCallback) {
@@ -27,7 +28,7 @@ class Grammar
                 return $token;
             }
         }
-        throw new TokenizeException("Could not build next token - no matching token generator found in grammar or no token returned");
+        return null;
     }
 
 
