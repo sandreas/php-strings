@@ -7,13 +7,12 @@ namespace Sandreas\Strings\StateMachine;
 class Tokenizer
 {
     const TOKEN_TYPE_DEFAULT = 0;
-    /**
-     * @var Grammar
-     */
+
+    /** @var Grammar */
     protected $grammar;
 
+    /** @var int */
     protected $maxFailedTokenBuildCount = 1;
-
 
     public function __construct(Grammar $grammar)
     {
@@ -47,7 +46,7 @@ class Tokenizer
         $maxFailedCount = $this->maxFailedTokenBuildCount;
         while (!$scanner->endReached()) {
             $positionBeforeTokenBuild = (int)$scanner->key();
-            $token = $this->grammar->buildNextToken($scanner);
+            $token = $this->grammar->buildNextToken($scanner, $tokens);
 
             if ($token === null) {
                 $fallbackToken->append($scanner->poke());

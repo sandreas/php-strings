@@ -19,12 +19,14 @@ class Grammar
 
     /**
      * @param Scanner $scanner
+     * @param $existingTokens
      * @return Token
      */
-    public function buildNextToken(Scanner $scanner) {
+    public function buildNextToken(Scanner $scanner, array &$existingTokens = null)
+    {
         foreach ($this->callbacks as $tokenGeneratorCallback) {
-            $token = $tokenGeneratorCallback($scanner);
-            if($token instanceof Token) {
+            $token = $tokenGeneratorCallback($scanner, $existingTokens);
+            if ($token instanceof Token) {
                 return $token;
             }
         }

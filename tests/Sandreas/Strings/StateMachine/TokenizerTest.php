@@ -73,6 +73,9 @@ class TokenizerTest extends TestCase
         return null;
     }
 
+    /**
+     * @throws TokenizeException
+     */
     public function testDefaultMaxFailedTokenBuildCount()
     {
         $this->expectExceptionObject(new TokenizeException("Scanner as not moved forward since 1 iterations (at position 0), so there seems to be something wrong with your grammar - to prevent endless loops, the tokenizer has been stopped"));
@@ -83,6 +86,9 @@ class TokenizerTest extends TestCase
         $this->subject->tokenize($this->mockScanner);
     }
 
+    /**
+     * @throws TokenizeException
+     */
     public function testSetMaxFailedTokenBuildCount()
     {
         $this->expectExceptionObject(new TokenizeException("Scanner as not moved forward since 3 iterations (at position 0), so there seems to be something wrong with your grammar - to prevent endless loops, the tokenizer has been stopped"));
@@ -93,25 +99,4 @@ class TokenizerTest extends TestCase
         $this->subject->setMaxFailedTokenBuildCount(3);
         $this->subject->tokenize($this->mockScanner);
     }
-
-    /*
-    public function testDisableMaxFailedTokenBuildCount()  {
-        $this->mockScanner->shouldReceive("endReached")->andReturnUsing(function() {
-            static $iterations = 0;
-            $iterations++;
-            return $iterations < 3;
-        });
-        $this->mockScanner->shouldReceive("key")->andReturn(function() {
-            static $iterations = 0;
-            $iterations++;
-            return $iterations < 2 ? 0 : 1;
-        });
-        $this->mockGrammar->shouldReceive("buildNextToken")->andReturn("fake-token");
-
-        $this->subject->setMaxFailedTokenBuildCount(0);
-        $tokens = $this->subject->tokenize($this->mockScanner);
-        $this->assertCount(3, $tokens);
-    }
-    */
-
 }
